@@ -3,6 +3,8 @@ package com.example.chatmessenger.guiControllers;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.chatmessenger.session.ClientSession;
+import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.util.Position;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -46,7 +48,10 @@ public class ChatController {
 
     @FXML
     void initialize() {
-        userLabel.setText("Избранное");
+        Client client = ClientSession.getCurrentClient();
+
+        userLabel.setText(client.getUsername());
+
         sendButton.setOnAction(event -> {
             sendMessage();
         });

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.chatmessenger.session.ClientSession;
 import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.repository.UserRepository;
 import javafx.fxml.FXML;
@@ -69,6 +70,8 @@ public class AuthController {
 
         if (clientCheck.isSelected()) {
             Client client = new Client(username, pass);
+
+            ClientSession.setCurrentClient(client);
 
             if (userRepository.findClientByUsernameAndPassword(client)) {
                 toChat();
