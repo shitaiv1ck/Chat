@@ -5,7 +5,10 @@ import java.util.ResourceBundle;
 
 import com.example.chatmessenger.session.ClientSession;
 import com.example.chatmessenger.user.entity.Client;
+import com.example.chatmessenger.user.entity.Status;
+import com.example.chatmessenger.user.repository.UserRepository;
 import com.example.chatmessenger.util.Position;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,6 +17,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
 
 public class ChatController {
 
@@ -55,6 +59,13 @@ public class ChatController {
         sendButton.setOnAction(event -> {
             sendMessage();
         });
+
+        Platform.runLater(() -> {
+            Stage stage = (Stage) userLabel.getScene().getWindow();
+            stage.setOnCloseRequest(windowEvent -> {
+                closeTheWindow();
+            });
+        });
     }
 
     private void sendMessage() {
@@ -69,6 +80,11 @@ public class ChatController {
         paneForMsg.setPrefHeight(paneForMsg.getHeight() + 40);
         text.setText("");
         scrollForChat.setVvalue(1);
+    }
+
+    private void closeTheWindow() {
+        UserRepository userRepository = new UserRepository();
+        userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
     }
 
 }

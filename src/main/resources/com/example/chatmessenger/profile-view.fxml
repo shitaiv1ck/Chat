@@ -1,14 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="$CONTROLLER_NAME$"
-            prefHeight="400.0" prefWidth="600.0" >
-
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="677.0" prefWidth="505.0" style="-fx-background-color: #E6E6FA; -fx-border-color: #9370DB;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.chatmessenger.guiControllers.ProfileController">
+    <children>
+        <AnchorPane prefHeight="78.0" prefWidth="505.0" style="-fx-background-color: #483D8B; -fx-border-color: #9370DB;">
+         <children>
+                <Label fx:id="userLabel" layoutX="75.0" layoutY="22.0" prefHeight="33.0" prefWidth="97.0" style="-fx-background-color: #9370DB; -fx-background-radius: 5;" textFill="LAVENDER">
+                    <font>
+                        <Font size="19.0" />
+                    </font>
+                </Label>
+                <ImageView fitHeight="67.0" fitWidth="83.0" layoutX="8.0" layoutY="6.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../../../images/user_icon.png" />
+                    </image>
+                </ImageView>
+            <Button fx:id="logOutButton" layoutX="386.0" layoutY="18.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="97.0" style="-fx-background-color: #9370DB;" text="Выйти" textFill="LAVENDER">
+               <font>
+                  <Font size="15.0" />
+               </font>
+            </Button>
+         </children>
+        </AnchorPane>
+      <AnchorPane layoutY="478.0" prefHeight="200.0" prefWidth="505.0" style="-fx-border-color: #9370DB;">
+         <children>
+            <Label layoutX="137.0" layoutY="14.0" prefHeight="33.0" prefWidth="232.0" style="-fx-background-color: #9370DB; -fx-background-radius: 5;" text="Отправить заявку в друны" textFill="LAVENDER">
+               <font>
+                  <Font size="19.0" />
+               </font>
+            </Label>
+            <TextField fx:id="receiverUsername" layoutX="14.0" layoutY="144.0" prefHeight="41.0" prefWidth="365.0" promptText="Введите username" style="-fx-border-color: #9370DB;">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </TextField>
+            <Button fx:id="sendRequestButton" layoutX="390.0" layoutY="144.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="97.0" style="-fx-background-color: #9370DB;" text="Отправить" textFill="LAVENDER">
+               <font>
+                  <Font size="15.0" />
+               </font>
+            </Button>
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutY="78.0" prefHeight="200.0" prefWidth="505.0" style="-fx-border-color: #9370DB;">
+         <children>
+            <Label layoutX="14.0" layoutY="14.0" prefHeight="38.0" prefWidth="214.0" style="-fx-background-color: #9370DB; -fx-background-radius: 5;" text="Начать диалог с друном" textFill="LAVENDER">
+               <font>
+                  <Font size="19.0" />
+               </font>
+            </Label>
+            <TextField fx:id="toChatField" layoutX="14.0" layoutY="144.0" prefHeight="41.0" prefWidth="365.0" promptText="Введите username или выберите из списка" style="-fx-border-color: #9370DB;">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </TextField>
+            <Button fx:id="toChatButton" layoutX="390.0" layoutY="144.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="97.0" style="-fx-background-color: #9370DB;" text="Начать" textFill="LAVENDER">
+               <font>
+                  <Font size="15.0" />
+               </font>
+            </Button>
+            <MenuButton fx:id="friendlistMenu" layoutX="267.0" layoutY="14.0" mnemonicParsing="false" prefHeight="33.0" prefWidth="220.0" style="-fx-background-color: #9370DB; -fx-background-radius: 5;" text="Список друнов" textFill="LAVENDER">
+               <font>
+                  <Font size="17.0" />
+               </font>
+            </MenuButton>
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutY="278.0" prefHeight="200.0" prefWidth="505.0" style="-fx-border-color: #9370DB;">
+         <children>
+            <Label layoutX="14.0" layoutY="14.0" prefHeight="38.0" prefWidth="214.0" style="-fx-background-color: #9370DB; -fx-background-radius: 5;" text="Принять заявку в друны" textFill="LAVENDER">
+               <font>
+                  <Font size="19.0" />
+               </font>
+            </Label>
+            <TextField fx:id="senderUsername" layoutX="14.0" layoutY="144.0" prefHeight="41.0" prefWidth="365.0" promptText="Введите username или выберите из списка" style="-fx-border-color: #9370DB;">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </TextField>
+            <Button fx:id="acceptRequestButton" layoutX="390.0" layoutY="144.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="97.0" style="-fx-background-color: #9370DB;" text="Принять" textFill="LAVENDER">
+               <font>
+                  <Font size="15.0" />
+               </font>
+            </Button>
+            <MenuButton fx:id="friendRequestsMenu" layoutX="267.0" layoutY="14.0" mnemonicParsing="false" prefHeight="33.0" prefWidth="220.0" style="-fx-background-color: #9370DB; -fx-background-radius: 5;" text="Список заявок" textFill="LAVENDER">
+               <font>
+                  <Font size="17.0" />
+               </font>
+            </MenuButton>
+         </children>
+      </AnchorPane>
+    </children>
 </AnchorPane>

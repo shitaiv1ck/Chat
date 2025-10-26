@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.chatmessenger.friendship.FriendshipRepository;
 import com.example.chatmessenger.session.ClientSession;
 import com.example.chatmessenger.user.entity.Client;
+import com.example.chatmessenger.user.entity.Status;
 import com.example.chatmessenger.user.repository.UserRepository;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -71,10 +73,17 @@ public class AuthController {
         if (clientCheck.isSelected()) {
             Client client = new Client(username, pass);
 
-            ClientSession.setCurrentClient(client);
-
             if (userRepository.findClientByUsernameAndPassword(client)) {
-                toChat();
+                userRepository.updateClientStatus(client, Status.ONLINE);
+
+                FriendshipRepository friendshipRepository = new FriendshipRepository();
+                client.setFriendRequests(friendshipRepository.findAllFriendRequestByReceiver(client));
+
+                client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
+
+                ClientSession.setCurrentClient(client);
+
+                toProfile();
             }
         }
     }
@@ -97,11 +106,11 @@ public class AuthController {
         stage.show();
     }
 
-    private void toChat() {
+    private void toProfile() {
         authButton.getScene().getWindow().hide();
 
         FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(getClass().getResource("/com/example/chatmessenger/chat-view.fxml"));
+        loader.setLocation(getClass().getResource("/com/example/chatmessenger/profile-view.fxml"));
 
         try {
             loader.load();

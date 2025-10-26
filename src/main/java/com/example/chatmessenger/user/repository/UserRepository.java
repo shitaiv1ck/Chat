@@ -2,6 +2,7 @@ package com.example.chatmessenger.user.repository;
 
 import com.example.chatmessenger.user.entity.Admin;
 import com.example.chatmessenger.user.entity.Client;
+import com.example.chatmessenger.user.entity.Status;
 
 import java.sql.*;
 
@@ -75,6 +76,38 @@ public class UserRepository {
         } catch (SQLException e) {
             System.out.println("invalid value");
             return false;
+        }
+    }
+
+    public boolean findClientByUsername(Client client) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select username from clients where username = ?");
+
+            statement.setString(1, client.getUsername());
+
+            ResultSet rs = statement.executeQuery();
+            return rs.next();
+
+        } catch (SQLException e) {
+            System.out.println("invalid value");
+            return false;
+        }
+    }
+
+    public void updateClientStatus(Client client, Status status) {
+        client.setStatus(status);
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)){
+            PreparedStatement statement = connection.prepareStatement("update clients set status = ? where username = ?");
+
+            statement.setString(1, client.getStatus().toString());
+            statement.setString(2, client.getUsername());
+
+            statement.executeUpdate();
+
+            statement.close();
+        } catch (SQLException e) {
+            System.out.println("invalid value");;
         }
     }
 }
