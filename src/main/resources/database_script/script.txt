@@ -1,0 +1,47 @@
+drop table if exists clients, admins, friendrequests, friendships, chatrooms, messages;
+
+create table clients (
+	client_id int primary key generated always as identity,
+	username varchar(100) not null unique,
+	password varchar(100) not null,
+	status varchar(10) check (status in ('ONLINE', 'OFFLINE', 'BUSY')) default 'OFFLINE'
+);
+
+create table admins (
+	admin_id int primary key generated always as identity,
+	username varchar(100) not null unique,
+	password varchar(100) not null
+);
+
+create table friendrequests (
+	fq_id int primary key generated always as identity,
+	from_user varchar(100) references clients(username),
+	to_user varchar(100) references clients(username),
+
+	constraint fk_check_no_requset_to_himself check (from_user != to_user)
+);
+
+create table friendships (
+	fs_id int primary key generated always as identity,
+	client1 varchar(100) references clients(username),
+	client2 varchar(100) references clients(username),
+
+	constraint fs_check_no_friend_with_himself check (client1 != client2)
+);
+
+create table chatrooms (
+	chat_id int primary key generated always as identity,
+	client1 varchar(100) references clients(username),
+	client2 varchar(100) references clients(username),
+
+	constraint cr_check_no_chatting_with_himself check (client1 != client2)
+);
+
+create table messages (
+	m_id int primary key generated always as identity,
+	sender varchar(100) references clients(username),
+	textMessage text,
+	chat_id int references chatrooms(chat_id)
+);
+
+
