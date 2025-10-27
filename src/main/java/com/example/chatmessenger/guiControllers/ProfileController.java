@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.chatmessenger.chatroom.ChatRoomRepository;
+import com.example.chatmessenger.chatroom.ChatRoomServiceImpl;
 import com.example.chatmessenger.friendship.FriendshipRepository;
 import com.example.chatmessenger.friendship.FriendshipService;
 import com.example.chatmessenger.friendship.FriendshipServiceImpl;
+import com.example.chatmessenger.session.ChatSession;
 import com.example.chatmessenger.session.ClientSession;
 import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.entity.Status;
@@ -67,6 +70,10 @@ public class ProfileController {
         showFriendRequests(client);
 
         showFriends(client);
+
+        toChatButton.setOnAction(event -> {
+            startChat(client);
+        });
 
         sendRequestButton.setOnAction(event -> {
             sendRequest(client);
@@ -129,6 +136,23 @@ public class ProfileController {
         }
     }
 
+    private void startChat(Client client1) {
+        UserRepository userRepository = new UserRepository();
+        FriendshipRepository friendshipRepository = new FriendshipRepository();
+        FriendshipServiceImpl friendshipService = new FriendshipServiceImpl(userRepository, friendshipRepository);
+
+        ChatRoomRepository chatRoomRepository = new ChatRoomRepository();
+        ChatRoomServiceImpl chatRoomService = new ChatRoomServiceImpl(chatRoomRepository);
+
+        if (!toChatField.getText().isBlank()) {
+            Client client2 = new Client(toChatField.getText());
+            if (friendshipService.areFriends(client1, client2)) {
+                ChatSession.setChatRoom(chatRoomService.createChat(client1, client2));
+                toChat();
+            }
+        }
+    }
+
     private void sendRequest(Client sender) {
         UserRepository userRepository = new UserRepository();
         FriendshipRepository friendshipRepository = new FriendshipRepository();
@@ -165,6 +189,24 @@ public class ProfileController {
 
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("/com/example/chatmessenger/auth-view.fxml"));
+
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Parent root = loader.getRoot();
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.show();
+    }
+
+    private void toChat() {
+        toChatButton.getScene().getWindow().hide();
+
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/com/example/chatmessenger/chat-view.fxml"));
 
         try {
             loader.load();
