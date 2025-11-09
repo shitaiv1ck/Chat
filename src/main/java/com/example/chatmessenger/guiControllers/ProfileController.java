@@ -21,9 +21,15 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
-import org.checkerframework.checker.units.qual.C;
 
 public class ProfileController {
+
+    private UserRepository userRepository = new UserRepository();
+    private FriendshipRepository friendshipRepository = new FriendshipRepository();
+    private FriendshipServiceImpl friendshipService = new FriendshipServiceImpl(userRepository, friendshipRepository);
+
+    private ChatRoomRepository chatRoomRepository = new ChatRoomRepository();
+    private ChatRoomServiceImpl chatRoomService = new ChatRoomServiceImpl(chatRoomRepository);
 
     @FXML
     private ResourceBundle resources;
@@ -96,7 +102,6 @@ public class ProfileController {
     }
 
     private void closeTheWindow () {
-        UserRepository userRepository = new UserRepository();
         userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
     }
 
@@ -137,37 +142,24 @@ public class ProfileController {
     }
 
     private void startChat(Client client1) {
-        UserRepository userRepository = new UserRepository();
-        FriendshipRepository friendshipRepository = new FriendshipRepository();
-        FriendshipServiceImpl friendshipService = new FriendshipServiceImpl(userRepository, friendshipRepository);
-
-        ChatRoomRepository chatRoomRepository = new ChatRoomRepository();
-        ChatRoomServiceImpl chatRoomService = new ChatRoomServiceImpl(chatRoomRepository);
 
         if (!toChatField.getText().isBlank()) {
             Client client2 = new Client(toChatField.getText());
             if (friendshipService.areFriends(client1, client2)) {
                 ChatSession.setChatRoom(chatRoomService.createChat(client1, client2));
+
                 toChat();
             }
         }
     }
 
     private void sendRequest(Client sender) {
-        UserRepository userRepository = new UserRepository();
-        FriendshipRepository friendshipRepository = new FriendshipRepository();
-        FriendshipServiceImpl friendshipService = new FriendshipServiceImpl(userRepository, friendshipRepository);
-
         Client receiver = new Client(receiverUsername.getText());
 
         friendshipService.sendFriendRequest(sender, receiver);
     }
 
     private void acceptRequest(Client accepter) {
-        UserRepository userRepository = new UserRepository();
-        FriendshipRepository friendshipRepository = new FriendshipRepository();
-        FriendshipServiceImpl friendshipService = new FriendshipServiceImpl(userRepository, friendshipRepository);
-
         Client requester = new Client(senderUsername.getText());
 
         if (friendshipService.acceptFriendRequest(accepter, requester)) {
@@ -182,7 +174,6 @@ public class ProfileController {
     private void toAuth() {
         logOutButton.getScene().getWindow().hide();
 
-        UserRepository userRepository = new UserRepository();
         userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
 
         ClientSession.setCurrentClient(null);

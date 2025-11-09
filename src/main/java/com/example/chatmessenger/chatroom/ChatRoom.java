@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChatRoom {
+    private int chatId;
     private Client client1;
     private Client client2;
-    private List<Message> messages = new ArrayList<>();
 
     public ChatRoom(Client client1, Client client2) {
         this.client1 = client1;
@@ -32,11 +32,11 @@ public class ChatRoom {
         this.client2 = client2;
     }
 
-    public List<Message> getMessages() {
-        return messages;
+    public int getChatId() {
+        return chatId;
     }
 
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
+    public void setChatId(int chatId) {
+        this.chatId = chatId;
     }
 }

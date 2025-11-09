@@ -1,7 +1,6 @@
 package com.example.chatmessenger.chatroom;
 
 import com.example.chatmessenger.user.entity.Client;
-import org.checkerframework.checker.units.qual.C;
 
 import java.sql.*;
 

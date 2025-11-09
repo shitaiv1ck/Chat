@@ -13,7 +13,7 @@
     <children>
         <AnchorPane prefHeight="600.0" prefWidth="238.0" style="-fx-background-color: #483D8B; -fx-border-color: #9370DB;">
          <children>
-            <Button fx:id="friendlistButton" layoutX="20.0" layoutY="14.0" mnemonicParsing="false" prefHeight="78.0" prefWidth="197.0" style="-fx-background-color: #9370DB;" text="Вернуться к списку друзей" textFill="LAVENDER">
+            <Button fx:id="profileButton" layoutX="20.0" layoutY="14.0" mnemonicParsing="false" prefHeight="78.0" prefWidth="197.0" style="-fx-background-color: #9370DB;" text="Вернуться в профиль" textFill="LAVENDER">
                <font>
                   <Font size="14.0" />
                </font>
@@ -50,7 +50,7 @@
       </AnchorPane>
       <ScrollPane fx:id="scrollForChat" layoutX="250.0" layoutY="90.0" prefHeight="421.0" prefWidth="641.0" style="-fx-background-color: #9370DB;">
         <content>
-          <AnchorPane fx:id="paneForMsg" minHeight="0.0" minWidth="0.0" prefHeight="45.0" prefWidth="121.0" />
+          <AnchorPane fx:id="paneForMsg" minHeight="0.0" minWidth="0.0" prefHeight="45.0" prefWidth="570.0" />
         </content>
       </ScrollPane>
     </children>

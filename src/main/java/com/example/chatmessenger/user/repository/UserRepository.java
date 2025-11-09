@@ -32,11 +32,19 @@ public class UserRepository {
 
             return rows > 0;
         } catch (SQLException e) {
-            if (e.getSQLState().startsWith("23")) {
-                System.out.println("Произошло дублирование данных");
-            } else {
-                System.out.println("invalid value");
+            System.out.println("=== SQL ERROR ===");
+            System.out.println("SQLState: " + e.getSQLState());
+            System.out.println("Error Code: " + e.getErrorCode());
+            System.out.println("Message: " + e.getMessage());
+
+            if ("23505".equals(e.getSQLState())) {
+                System.out.println("Duplicate username");
+            } else if ("23502".equals(e.getSQLState())) {
+                System.out.println("Null constraint violation");
+            } else if ("22001".equals(e.getSQLState())) {
+                System.out.println("Data too long for column");
             }
+
             return false;
         }
     }
@@ -57,7 +65,7 @@ public class UserRepository {
             if (e.getSQLState().startsWith("23")) {
                 System.out.println("Произошло дублирование данных");
             } else {
-                System.out.println("invalid value");
+                System.out.println("invalid value2");
             }
             return false;
         }
@@ -74,7 +82,7 @@ public class UserRepository {
             return rs.next();
 
         } catch (SQLException e) {
-            System.out.println("invalid value");
+            System.out.println("invalid value3");
             return false;
         }
     }
@@ -89,7 +97,7 @@ public class UserRepository {
             return rs.next();
 
         } catch (SQLException e) {
-            System.out.println("invalid value");
+            System.out.println("invalid value4");
             return false;
         }
     }
@@ -107,7 +115,7 @@ public class UserRepository {
 
             statement.close();
         } catch (SQLException e) {
-            System.out.println("invalid value");;
+            System.out.println("invalid value5");;
         }
     }
 }

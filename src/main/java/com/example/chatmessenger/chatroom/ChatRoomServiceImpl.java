@@ -19,6 +19,8 @@ public class ChatRoomServiceImpl implements ChatRoomService{
             chatRoomRepository.saveChatRoom(chatRoom);
         }
 
+        chatRoom.setChatId(chatRoomRepository.findChatRoomByClient(chatRoom));
+
         return chatRoom;
     }
 }

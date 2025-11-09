@@ -2,8 +2,8 @@ module com.example.chatmessenger {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.sql;
-    requires org.checkerframework.checker.qual;
     requires javafx.graphics;
+    requires org.jetbrains.annotations;
 
 
     opens com.example.chatmessenger to javafx.fxml;
