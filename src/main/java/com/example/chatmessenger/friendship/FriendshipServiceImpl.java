@@ -13,18 +13,9 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     @Override
-    public void sendFriendRequest(Client from, Client to) {
+    public boolean sendFriendRequest(Client from, Client to) {
         if (userRepository.findClientByUsername(to) && !areFriends(from, to)) {
             friendshipRepository.saveRequest(from, to);
-        }
-    }
-
-    @Override
-    public boolean acceptFriendRequest(Client accepter, Client requster) {
-        if (friendshipRepository.findFriendRequest(requster, accepter) && !areFriends(accepter, requster)) {
-            friendshipRepository.saveFriendship(requster, accepter);
-            friendshipRepository.deleteFriendRequest(requster, accepter);
-            friendshipRepository.deleteFriendRequest(accepter, requster);
 
             return true;
         }
@@ -33,8 +24,26 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     @Override
-    public void removeFriend(Client client, Client friendToRemove) {
+    public boolean acceptFriendRequest(Client accepter, Client requster) {
+        if (friendshipRepository.findFriendRequest(requster, accepter) && !areFriends(accepter, requster)) {
+            friendshipRepository.saveFriendship(requster, accepter);
+            friendshipRepository.deleteFriendRequest(requster, accepter);
 
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean removeFriend(Client client, Client friendToRemove) {
+        if (areFriends(client, friendToRemove)) {
+            friendshipRepository.deleteFriendship(client, friendToRemove);
+
+            return true;
+        }
+
+        return false;
     }
 
     @Override

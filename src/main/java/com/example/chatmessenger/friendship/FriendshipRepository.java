@@ -76,10 +76,12 @@ public class FriendshipRepository {
     public void deleteFriendRequest(Client client1, Client client2) {
 
         try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
-            PreparedStatement statement = connection.prepareStatement("delete from friendrequests where from_user = ? and to_user = ?");
+            PreparedStatement statement = connection.prepareStatement("delete from friendrequests where (from_user = ? and to_user = ?) or (from_user = ? and to_user = ?)");
 
             statement.setString(1, client1.getUsername());
             statement.setString(2, client2.getUsername());
+            statement.setString(3, client2.getUsername());
+            statement.setString(4, client1.getUsername());
 
             statement.executeUpdate();
 
@@ -102,6 +104,26 @@ public class FriendshipRepository {
             statement.close();
         } catch (SQLException e) {
             System.out.println("error_save_FS");
+        }
+    }
+
+    public void deleteFriendship(Client client1, Client client2) {
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+
+            PreparedStatement statement = connection.prepareStatement("delete from friendships where (client1 = ? and client2 = ?) or (client1 = ? and client2 = ?)");
+
+            statement.setString(1, client1.getUsername());
+            statement.setString(2, client2.getUsername());
+            statement.setString(3, client2.getUsername());
+            statement.setString(4, client1.getUsername());
+
+            statement.executeUpdate();
+
+            statement.close();
+
+        } catch (SQLException e) {
+            System.out.println("error_delete_friend");
         }
     }
 

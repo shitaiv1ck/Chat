@@ -4,6 +4,7 @@ module com.example.chatmessenger {
     requires java.sql;
     requires javafx.graphics;
     requires org.jetbrains.annotations;
+    requires org.checkerframework.checker.qual;
 
 
     opens com.example.chatmessenger to javafx.fxml;

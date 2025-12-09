@@ -16,6 +16,9 @@ import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.entity.Status;
 import com.example.chatmessenger.user.repository.UserRepository;
 import com.example.chatmessenger.util.Position;
+
+import com.example.chatmessenger.client.ChatClient;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,12 +33,14 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-public class ChatController {
+public class ChatController implements ChatClient.MessageListener{
 
     private MessageRepository messageRepository = new MessageRepository();
     private MessageServiceImpl messageService = new MessageServiceImpl(messageRepository);
 
     private UserRepository userRepository = new UserRepository();
+
+    private ChatClient chatClient;
 
     @FXML
     private ResourceBundle resources;
@@ -69,6 +74,13 @@ public class ChatController {
 
         ChatRoom chatRoom = ChatSession.getChatRoom();
 
+
+        // Подключаемся к серверу
+        chatClient = new ChatClient(this);
+        if (chatClient.connect()) {
+            chatClient.registerClient(client.getUsername() + "_chat_" + chatRoom.getChatId());
+        }
+
         sendButton.setOnAction(event -> {
             sendingMessage(client, chatRoom);
         });
@@ -87,16 +99,35 @@ public class ChatController {
         });
     }
 
+    @Override
+    public void onMessageReceived(String message) {
+        if (message.startsWith("NOTIFY:")) {
+            // Обновляем сообщения при получении уведомления
+            Platform.runLater(() -> {
+                ChatRoom chatRoom = ChatSession.getChatRoom();
+                Client client = ClientSession.getCurrentClient();
+                showAllMessages(chatRoom, client);
+            });
+        }
+    }
+
     private void sendingMessage(Client client, ChatRoom chatRoom) {
         if (!text.getText().isBlank()) {
-
             Message message = new Message(client, text.getText(), chatRoom.getChatId());
-
             messageService.sendMessage(message);
 
-            text.setText("");
+            // Отправляем уведомление через сокет
+            chatClient.notifyNewMessage(chatRoom.getChatId());
 
+            text.setText("");
             showAllMessages(chatRoom, client);
+        }
+    }
+
+    private void closeTheWindow() {
+        userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
+        if (chatClient != null) {
+            chatClient.disconnect();
         }
     }
 
@@ -128,10 +159,6 @@ public class ChatController {
 
         paneForMsg.setPrefHeight(position.getY() + 40);
         scrollForChat.setVvalue(1);
-    }
-
-    private void closeTheWindow() {
-        userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
     }
 
     private void toProfile() {

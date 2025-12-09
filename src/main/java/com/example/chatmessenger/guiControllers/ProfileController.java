@@ -21,6 +21,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import org.checkerframework.checker.units.qual.C;
 
 public class ProfileController {
 
@@ -46,6 +47,10 @@ public class ProfileController {
     @FXML
     private MenuButton friendlistMenu;
 
+
+    @FXML
+    private MenuButton friendlistMenu1;
+
     @FXML
     private MenuButton friendRequestsMenu;
 
@@ -65,6 +70,12 @@ public class ProfileController {
     private TextField toChatField;
 
     @FXML
+    private Button toDeleteButton;
+
+    @FXML
+    private TextField toDeleteField;
+
+    @FXML
     private Label userLabel;
 
     @FXML
@@ -77,6 +88,8 @@ public class ProfileController {
 
         showFriends(client);
 
+        showFriendsToDelete(client);
+
         toChatButton.setOnAction(event -> {
             startChat(client);
         });
@@ -87,6 +100,10 @@ public class ProfileController {
 
         acceptRequestButton.setOnAction(event -> {
             acceptRequest(client);
+        });
+
+        toDeleteButton.setOnAction(event -> {
+            removeFriendship(client);
         });
 
         logOutButton.setOnAction(event -> {
@@ -141,10 +158,29 @@ public class ProfileController {
         }
     }
 
+    private void showFriendsToDelete(Client client) {
+        friendlistMenu1.getItems().clear();
+
+        if (!client.getFriendList().isEmpty()) {
+            for (String friend : client.getFriendList()) {
+                MenuItem item = new MenuItem(friend);
+                item.setOnAction(event -> {
+                    toDeleteField.setText(item.getText());
+                });
+
+                friendlistMenu1.getItems().add(item);
+            }
+        } else {
+            MenuItem item = new MenuItem("Нет друзей");
+            friendlistMenu1.getItems().add(item);
+        }
+    }
+
     private void startChat(Client client1) {
 
         if (!toChatField.getText().isBlank()) {
             Client client2 = new Client(toChatField.getText());
+
             if (friendshipService.areFriends(client1, client2)) {
                 ChatSession.setChatRoom(chatRoomService.createChat(client1, client2));
 
@@ -154,20 +190,46 @@ public class ProfileController {
     }
 
     private void sendRequest(Client sender) {
-        Client receiver = new Client(receiverUsername.getText());
 
-        friendshipService.sendFriendRequest(sender, receiver);
+        if (!receiverUsername.getText().isBlank()) {
+            Client receiver = new Client(receiverUsername.getText());
+
+            if (friendshipService.sendFriendRequest(sender, receiver)) {
+                receiverUsername.setText("");
+            }
+        }
     }
 
     private void acceptRequest(Client accepter) {
-        Client requester = new Client(senderUsername.getText());
+        if (!senderUsername.getText().isBlank()) {
+            Client requester = new Client(senderUsername.getText());
 
-        if (friendshipService.acceptFriendRequest(accepter, requester)) {
-            accepter.setFriendList(friendshipRepository.findAllFriendsByClient(accepter));
-            accepter.setFriendRequests(friendshipRepository.findAllFriendRequestByReceiver(accepter));
+            if (friendshipService.acceptFriendRequest(accepter, requester)) {
+                accepter.setFriendList(friendshipRepository.findAllFriendsByClient(accepter));
+                accepter.setFriendRequests(friendshipRepository.findAllFriendRequestByReceiver(accepter));
 
-            showFriends(accepter);
-            showFriendRequests(accepter);
+                showFriends(accepter);
+                showFriendRequests(accepter);
+                showFriendsToDelete(accepter);
+
+                senderUsername.setText("");
+            }
+        }
+    }
+
+    private void removeFriendship(Client client) {
+        if (!toDeleteField.getText().isBlank()) {
+            Client friendToRemove = new Client(toDeleteField.getText());
+
+            if (friendshipService.removeFriend(client, friendToRemove)) {
+                client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
+
+                showFriendsToDelete(client);
+                showFriends(client);
+
+                toDeleteField.setText("");
+            }
+
         }
     }
 
