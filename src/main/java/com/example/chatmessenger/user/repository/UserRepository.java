@@ -3,8 +3,12 @@ package com.example.chatmessenger.user.repository;
 import com.example.chatmessenger.user.entity.Admin;
 import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.entity.Status;
+import org.checkerframework.checker.units.qual.C;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class UserRepository {
     private static final String PROTOCOL = "jdbc:postgresql://";
@@ -87,6 +91,21 @@ public class UserRepository {
         }
     }
 
+    public boolean findAdminByUsernameAndPassword(Admin admin) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select username, password from admins where username = ? and password = ?");
+
+            statement.setString(1, admin.getUsername());
+            statement.setString(2, admin.getPassword());
+
+            ResultSet rs = statement.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            System.out.println("error_find_admin");
+            return false;
+        }
+    }
+
     public boolean findClientByUsername(Client client) {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
             PreparedStatement statement = connection.prepareStatement("select username from clients where username = ?");
@@ -99,6 +118,50 @@ public class UserRepository {
         } catch (SQLException e) {
             System.out.println("invalid value4");
             return false;
+        }
+    }
+
+    public boolean findClientByApproved(Client client) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select isApproved from clients where username = ?");
+
+            statement.setString(1, client.getUsername());
+
+            boolean isApproved = false;
+
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                isApproved = rs.getBoolean("isApproved");
+            }
+
+            return isApproved;
+
+        } catch (SQLException e) {
+            System.out.println("error_find_not_approved_client");
+            return false;
+        }
+    }
+
+    public List<String> findAllClientsByNotApproved() {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select username from clients where isApproved = ?");
+
+            statement.setBoolean(1, false);
+
+            List<String> clients = new ArrayList<>();
+
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                String clientUsername = rs.getString("username");
+                clients.add(clientUsername);
+            }
+
+            return clients;
+        } catch (SQLException e) {
+            System.out.println("error_find_not_approved_clients");
+            return Collections.emptyList();
         }
     }
 
@@ -116,6 +179,44 @@ public class UserRepository {
             statement.close();
         } catch (SQLException e) {
             System.out.println("invalid value5");;
+        }
+    }
+
+    public void updateApprovedClient(Client client) {
+        client.setApproved(true);
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)){
+            PreparedStatement statement = connection.prepareStatement("update clients set isApproved = ? where username = ?");
+
+            statement.setBoolean(1, true);
+            statement.setString(2, client.getUsername());
+
+            statement.executeUpdate();
+
+            statement.close();
+        } catch (SQLException e) {
+            System.out.println("error_approved");;
+        }
+    }
+
+    public String getClientStatusByUsername(String username) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select status from clients where username = ?");
+
+            statement.setString(1, username);
+
+            String clientStatus = "";
+
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                clientStatus = rs.getString("status");
+            }
+
+            return clientStatus;
+        } catch (SQLException e) {
+            System.out.println("error_get_status");
+            return "";
         }
     }
 }

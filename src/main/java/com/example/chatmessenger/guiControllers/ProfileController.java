@@ -145,9 +145,10 @@ public class ProfileController {
 
         if (!client.getFriendList().isEmpty()) {
             for (String friend : client.getFriendList()) {
-                MenuItem item = new MenuItem(friend);
+                String friendWithStatus = friend + " | " + userRepository.getClientStatusByUsername(friend);
+                MenuItem item = new MenuItem(friendWithStatus);
                 item.setOnAction(event -> {
-                    toChatField.setText(item.getText());
+                    toChatField.setText(friendWithStatus.substring(0, friendWithStatus.indexOf("|") - 1));
                 });
 
                 friendlistMenu.getItems().add(item);

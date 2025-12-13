@@ -5,7 +5,9 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import com.example.chatmessenger.friendship.FriendshipRepository;
+import com.example.chatmessenger.session.AdminSession;
 import com.example.chatmessenger.session.ClientSession;
+import com.example.chatmessenger.user.entity.Admin;
 import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.entity.Status;
 import com.example.chatmessenger.user.repository.UserRepository;
@@ -83,8 +85,21 @@ public class AuthController {
 
                 ClientSession.setCurrentClient(client);
 
-                toProfile();
+                if (!userRepository.findClientByApproved(client)) {
+                    toWaitingWindow();
+                } else {
+                    toProfile();
+                }
             }
+        } else if (adminCheck.isSelected()) {
+            Admin admin = new Admin(username, pass);
+
+            if (userRepository.findAdminByUsernameAndPassword(admin)) {
+                AdminSession.setCurrentAdmin(admin);
+
+                toAdminWindow();
+            }
+
         }
     }
 
@@ -111,6 +126,42 @@ public class AuthController {
 
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("/com/example/chatmessenger/profile-view.fxml"));
+
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Parent root = loader.getRoot();
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.show();
+    }
+
+    private void toWaitingWindow() {
+        authButton.getScene().getWindow().hide();
+
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/com/example/chatmessenger/waiting-view.fxml"));
+
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Parent root = loader.getRoot();
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.show();
+    }
+
+    private void toAdminWindow() {
+        authButton.getScene().getWindow().hide();
+
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/com/example/chatmessenger/admin-view.fxml"));
 
         try {
             loader.load();
