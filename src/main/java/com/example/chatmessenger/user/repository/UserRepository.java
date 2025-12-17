@@ -121,6 +121,20 @@ public class UserRepository {
         }
     }
 
+    public boolean findAdminByUsername(Admin admin) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select username, password from admins where username = ?");
+
+            statement.setString(1, admin.getUsername());
+
+            ResultSet rs = statement.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            System.out.println("error_find_admin");
+            return false;
+        }
+    }
+
     public boolean findClientByApproved(Client client) {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
             PreparedStatement statement = connection.prepareStatement("select isApproved from clients where username = ?");
@@ -148,6 +162,28 @@ public class UserRepository {
             PreparedStatement statement = connection.prepareStatement("select username from clients where isApproved = ?");
 
             statement.setBoolean(1, false);
+
+            List<String> clients = new ArrayList<>();
+
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                String clientUsername = rs.getString("username");
+                clients.add(clientUsername);
+            }
+
+            return clients;
+        } catch (SQLException e) {
+            System.out.println("error_find_not_approved_clients");
+            return Collections.emptyList();
+        }
+    }
+
+    public List<String> findAllClientsByApproved() {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL, USER_NAME, DATABASE_PASS)) {
+            PreparedStatement statement = connection.prepareStatement("select username from clients where isApproved = ?");
+
+            statement.setBoolean(1, true);
 
             List<String> clients = new ArrayList<>();
 

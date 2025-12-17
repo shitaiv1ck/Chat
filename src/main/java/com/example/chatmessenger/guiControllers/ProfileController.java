@@ -2,6 +2,8 @@ package com.example.chatmessenger.guiControllers;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import com.example.chatmessenger.chatroom.ChatRoomRepository;
@@ -22,6 +24,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.checkerframework.checker.units.qual.C;
+import com.example.chatmessenger.client.ChatClient;
+import javafx.application.Platform;
+
 
 public class ProfileController {
 
@@ -31,6 +36,9 @@ public class ProfileController {
 
     private ChatRoomRepository chatRoomRepository = new ChatRoomRepository();
     private ChatRoomServiceImpl chatRoomService = new ChatRoomServiceImpl(chatRoomRepository);
+
+    private ChatClient chatClient;
+    private final List<String> friendsWithStatus = new ArrayList<>();
 
     @FXML
     private ResourceBundle resources;
@@ -47,6 +55,11 @@ public class ProfileController {
     @FXML
     private MenuButton friendlistMenu;
 
+    @FXML
+    private Button changeStatusButton;
+
+    @FXML
+    private Label currentStatusLabel;
 
     @FXML
     private MenuButton friendlistMenu1;
@@ -83,6 +96,9 @@ public class ProfileController {
         Client client = ClientSession.getCurrentClient();
 
         userLabel.setText(client.getUsername());
+        currentStatusLabel.setText(userRepository.getClientStatusByUsername(client.getUsername()));
+
+        initStatusUpdates(client);
 
         showFriendRequests(client);
 
@@ -106,6 +122,10 @@ public class ProfileController {
             removeFriendship(client);
         });
 
+        changeStatusButton.setOnAction(event -> {
+            changeStatus(client);
+        });
+
         logOutButton.setOnAction(event -> {
             toAuth();
         });
@@ -118,8 +138,40 @@ public class ProfileController {
         });
     }
 
-    private void closeTheWindow () {
+    private void closeTheWindow() {
+        // Обновляем статус в БД
         userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
+
+        // Отправляем обновление статуса на сервер
+        if (chatClient != null) {
+            chatClient.updateStatus("OFFLINE");
+            try {
+                Thread.sleep(100); // Даем время отправить
+                chatClient.disconnect();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void changeStatus(Client client) {
+        if (currentStatusLabel.getText().equals(String.valueOf(Status.ONLINE))) {
+            userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.BUSY);
+
+            if (chatClient != null) {
+                chatClient.updateStatus("BUSY");
+            }
+
+            currentStatusLabel.setText("BUSY");
+        } else if (currentStatusLabel.getText().equals(String.valueOf(Status.BUSY))) {
+            userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.ONLINE);
+
+            if (chatClient != null) {
+                chatClient.updateStatus("ONLINE");
+            }
+
+            currentStatusLabel.setText("ONLINE");
+        }
     }
 
     private void showFriendRequests(Client client) {
@@ -142,16 +194,20 @@ public class ProfileController {
 
     private void showFriends(Client client) {
         friendlistMenu.getItems().clear();
+        friendsWithStatus.clear();
 
         if (!client.getFriendList().isEmpty()) {
             for (String friend : client.getFriendList()) {
-                String friendWithStatus = friend + " | " + userRepository.getClientStatusByUsername(friend);
+                String currentStatus = userRepository.getClientStatusByUsername(friend);
+                String friendWithStatus = friend + " | " + currentStatus;
+
                 MenuItem item = new MenuItem(friendWithStatus);
                 item.setOnAction(event -> {
                     toChatField.setText(friendWithStatus.substring(0, friendWithStatus.indexOf("|") - 1));
                 });
 
                 friendlistMenu.getItems().add(item);
+                friendsWithStatus.add(friendWithStatus);
             }
         } else {
             MenuItem item = new MenuItem("Нет друзей");
@@ -182,21 +238,30 @@ public class ProfileController {
         if (!toChatField.getText().isBlank()) {
             Client client2 = new Client(toChatField.getText());
 
-            if (friendshipService.areFriends(client1, client2)) {
+            String clientStatus = userRepository.getClientStatusByUsername(client2.getUsername());
+
+            if (friendshipService.areFriends(client1, client2) && clientStatus.equals(String.valueOf(Status.ONLINE))) {
                 ChatSession.setChatRoom(chatRoomService.createChat(client1, client2));
 
                 toChat();
+            } else {
+                showNotification("Не удалось начать чат", "Клиент " + client2.getUsername() + " в данный момент " + clientStatus);
             }
         }
     }
 
     private void sendRequest(Client sender) {
-
         if (!receiverUsername.getText().isBlank()) {
             Client receiver = new Client(receiverUsername.getText());
 
             if (friendshipService.sendFriendRequest(sender, receiver)) {
+                // Отправляем уведомление через сервер
+                if (chatClient != null) {
+                    chatClient.sendFriendRequest(sender.getUsername(), receiver.getUsername());
+                }
+
                 receiverUsername.setText("");
+                showNotification("Заявка отправлена", "Заявка в друзья отправлена пользователю " + receiver.getUsername());
             }
         }
     }
@@ -206,9 +271,16 @@ public class ProfileController {
             Client requester = new Client(senderUsername.getText());
 
             if (friendshipService.acceptFriendRequest(accepter, requester)) {
+                // Отправляем уведомление через сервер
+                if (chatClient != null) {
+                    chatClient.acceptFriendRequest(accepter.getUsername(), requester.getUsername());
+                }
+
+                // Обновляем данные из БД
                 accepter.setFriendList(friendshipRepository.findAllFriendsByClient(accepter));
                 accepter.setFriendRequests(friendshipRepository.findAllFriendRequestByReceiver(accepter));
 
+                // Обновляем UI
                 showFriends(accepter);
                 showFriendRequests(accepter);
                 showFriendsToDelete(accepter);
@@ -223,14 +295,195 @@ public class ProfileController {
             Client friendToRemove = new Client(toDeleteField.getText());
 
             if (friendshipService.removeFriend(client, friendToRemove)) {
+                // Отправляем уведомление через сервер
+                if (chatClient != null) {
+                    chatClient.notifyFriendRemoved(client.getUsername(), friendToRemove.getUsername());
+                }
+
+                // Обновляем данные из БД
                 client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
 
+                // Обновляем UI
                 showFriendsToDelete(client);
                 showFriends(client);
 
                 toDeleteField.setText("");
+
+                // Уведомление показывается в handleFriendRemoved()
+            }
+        }
+    }
+
+    private void initStatusUpdates(Client client) {
+        // Создаем клиент для получения обновлений статусов
+        chatClient = new ChatClient(new ChatClient.MessageListener() {
+            @Override
+            public void onMessageReceived(String message) {
+                // Не используется в этом контроллере
             }
 
+            @Override
+            public void onStatusUpdate(String username, String newStatus) {
+                // Обновляем статус друга в реальном времени
+                Platform.runLater(() -> {
+                    updateFriendStatus(username, newStatus);
+                });
+            }
+        });
+
+        // Заявки в друзья
+        chatClient.setRequestListener(new ChatClient.RequestListener() {
+            @Override
+            public void onNewFriendRequest(String sender) {
+                Platform.runLater(() -> {
+                    handleNewFriendRequest(sender);
+                });
+            }
+
+            @Override
+            public void onRequestAccepted(String accepter) {
+                Platform.runLater(() -> {
+                    handleRequestAccepted(accepter);
+                });
+            }
+
+            @Override
+            public void onFriendAdded(String newFriend) {
+                Platform.runLater(() -> {
+                    handleFriendAdded(newFriend);
+                });
+            }
+
+            @Override
+            public void onFriendRemoved(String removedFriend) {
+                Platform.runLater(() -> {
+                    handleFriendRemoved(removedFriend);
+                });
+            }
+
+            @Override
+            public void onFriendRemovedBy(String remover) {
+                Platform.runLater(() -> {
+                    handleFriendRemovedBy(remover);
+                });
+            }
+        });
+
+        // Подключаемся к серверу
+        if (chatClient.connect()) {
+            // Регистрируем клиента с текущим статусом
+            String status = userRepository.getClientStatusByUsername(client.getUsername());
+            if (status.isEmpty()) {
+                status = "ONLINE";
+            }
+            chatClient.registerClient(client.getUsername() + ":" + status);
+
+        }
+    }
+
+    // Обработчики событий в реальном времени
+    private void handleNewFriendRequest(String sender) {
+        System.out.println("Real-time: New friend request from " + sender);
+
+        Client client = ClientSession.getCurrentClient();
+
+        // Обновляем список заявок из БД
+        client.setFriendRequests(friendshipRepository.findAllFriendRequestByReceiver(client));
+
+        // Обновляем UI
+        showFriendRequests(client);
+
+        // Показываем уведомление
+        showNotification("Новая заявка в друзья", "Пользователь " + sender + " отправил вам заявку в друзья!");
+    }
+
+    private void handleRequestAccepted(String accepter) {
+        System.out.println("Real-time: Your request to " + accepter + " was accepted!");
+
+        Client client = ClientSession.getCurrentClient();
+
+        // Обновляем список друзей из БД
+        client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
+
+        // Обновляем UI
+        showFriends(client);
+        showFriendsToDelete(client);
+
+        // Показываем уведомление
+        showNotification("Заявка принята", "Пользователь " + accepter + " принял вашу заявку в друзья!");
+    }
+
+    private void handleFriendAdded(String newFriend) {
+        System.out.println("Real-time: New friend added - " + newFriend);
+
+        Client client = ClientSession.getCurrentClient();
+
+        // Обновляем список друзей из БД
+        client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
+
+        // Обновляем UI
+        showFriends(client);
+        showFriendsToDelete(client);
+
+        // Удаляем заявку из списка (если она там есть)
+        showFriendRequests(client);
+    }
+
+    private void handleFriendRemoved(String removedFriend) {
+        System.out.println("Real-time: You removed friend - " + removedFriend);
+
+        Client client = ClientSession.getCurrentClient();
+
+        // Обновляем список друзей из БД
+        client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
+
+        // Обновляем UI
+        showFriends(client);
+        showFriendsToDelete(client);
+
+        // Показываем уведомление
+        showNotification("Друг удален", "Вы удалили пользователя " + removedFriend + " из друзей");
+    }
+
+    private void handleFriendRemovedBy(String remover) {
+        System.out.println("Real-time: You were removed by friend - " + remover);
+
+        Client client = ClientSession.getCurrentClient();
+
+        // Обновляем список друзей из БД
+        client.setFriendList(friendshipRepository.findAllFriendsByClient(client));
+
+        // Обновляем UI
+        showFriends(client);
+        showFriendsToDelete(client);
+
+        // Показываем уведомление
+        showNotification("Друг удалил вас", "Пользователь " + remover + " удалил вас из друзей");
+    }
+
+    // Вспомогательный метод для уведомлений
+    private void showNotification(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.initOwner(userLabel.getScene().getWindow());
+            alert.show();
+        });
+    }
+
+    private void updateFriendStatus(String friendUsername, String newStatus) {
+
+        // Обновляем статус в списке друзей
+        for (MenuItem item : friendlistMenu.getItems()) {
+            String itemText = item.getText();
+            if (itemText.contains(friendUsername)) {
+                // Обновляем текст с новым статусом
+                String newText = friendUsername + " | " + newStatus;
+                item.setText(newText);
+                break;
+            }
         }
     }
 
@@ -238,6 +491,16 @@ public class ProfileController {
         logOutButton.getScene().getWindow().hide();
 
         userRepository.updateClientStatus(ClientSession.getCurrentClient(), Status.OFFLINE);
+
+        if (chatClient != null) {
+            chatClient.updateStatus("OFFLINE");
+            try {
+                Thread.sleep(100); // Даем время отправить
+                chatClient.disconnect();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         ClientSession.setCurrentClient(null);
 

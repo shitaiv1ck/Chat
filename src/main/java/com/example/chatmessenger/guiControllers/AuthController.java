@@ -11,14 +11,12 @@ import com.example.chatmessenger.user.entity.Admin;
 import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.entity.Status;
 import com.example.chatmessenger.user.repository.UserRepository;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.*;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class AuthController {
@@ -28,6 +26,9 @@ public class AuthController {
 
     @FXML
     private URL location;
+
+    @FXML
+    private Label chatField;
 
     @FXML
     private Button toSignUpButton;
@@ -90,6 +91,10 @@ public class AuthController {
                 } else {
                     toProfile();
                 }
+            } else if (userRepository.findClientByUsername(client)){
+                showNotification("Ошибка входа!", "Неверный пароль!");
+            } else {
+                showNotification("Ошибка входа!", "Клиента " + client.getUsername() + " не существует!");
             }
         } else if (adminCheck.isSelected()) {
             Admin admin = new Admin(username, pass);
@@ -98,9 +103,24 @@ public class AuthController {
                 AdminSession.setCurrentAdmin(admin);
 
                 toAdminWindow();
+            } else if (userRepository.findAdminByUsername(admin)) {
+                showNotification("Ошибка входа!", "Неверный пароль");
+            } else {
+                showNotification("Ошибка входа!", "Администратора " + admin.getUsername() + " не существует!");
             }
 
         }
+    }
+
+    private void showNotification(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.initOwner(chatField.getScene().getWindow());
+            alert.show();
+        });
     }
 
     private void toSignUp() {

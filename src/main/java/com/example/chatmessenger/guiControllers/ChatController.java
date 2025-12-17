@@ -111,6 +111,11 @@ public class ChatController implements ChatClient.MessageListener{
         }
     }
 
+    @Override
+    public void onStatusUpdate(String username, String newStatus) {
+
+    }
+
     private void sendingMessage(Client client, ChatRoom chatRoom) {
         if (!text.getText().isBlank()) {
             Message message = new Message(client, text.getText(), chatRoom.getChatId());

@@ -7,14 +7,12 @@ import java.util.ResourceBundle;
 import com.example.chatmessenger.user.entity.Admin;
 import com.example.chatmessenger.user.entity.Client;
 import com.example.chatmessenger.user.repository.UserRepository;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 public class SignUpController {
@@ -26,10 +24,10 @@ public class SignUpController {
     private URL location;
 
     @FXML
-    private CheckBox adminCheck;
+    private Label chatLabel;
 
     @FXML
-    private CheckBox clientCheck;
+    private Button logOutButton;
 
     @FXML
     private TextField login;
@@ -46,12 +44,8 @@ public class SignUpController {
             signUp();
         });
 
-        clientCheck.setOnAction(event -> {
-            adminCheck.setSelected(false);
-        });
-
-        adminCheck.setOnAction(event -> {
-            clientCheck.setSelected(false);
+        logOutButton.setOnAction(event -> {
+            toAuth();
         });
     }
 
@@ -62,37 +56,44 @@ public class SignUpController {
         String pass = password.getText();
 
         if (!username.isBlank() && !pass.isBlank()) {
-            boolean isSave = false;
 
-            if (clientCheck.isSelected()) {
-                Client client = new Client(username, pass);
-                isSave = userRepository.saveClient(client);
-            } else if (adminCheck.isSelected()) {
-                Admin admin = new Admin(username, pass);
-                isSave = userRepository.saveAdmin(admin);
+            Client client = new Client(username, pass);
+
+            if (!userRepository.findClientByUsername(client)) {
+                userRepository.saveClient(client);
+                toAuth();
+            } else {
+                showNotification("Ошибка регистрации!", "Клиент " + client.getUsername() + " уже существует!");
             }
-
-            toAuth(isSave);
         }
     }
 
-    private void toAuth(boolean isSave) {
-        if (isSave) {
-            signUpButton.getScene().getWindow().hide();
+    private void showNotification(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.initOwner(chatLabel.getScene().getWindow());
+            alert.show();
+        });
+    }
 
-            FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(getClass().getResource("/com/example/chatmessenger/auth-view.fxml"));
+    private void toAuth() {
+        signUpButton.getScene().getWindow().hide();
 
-            try {
-                loader.load();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/com/example/chatmessenger/auth-view.fxml"));
 
-            Parent root = loader.getRoot();
-            Stage stage = new Stage();
-            stage.setScene(new Scene(root));
-            stage.show();
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
+        Parent root = loader.getRoot();
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.show();
     }
 }

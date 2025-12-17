@@ -36,7 +36,7 @@
             </Label>
          </children>
       </AnchorPane>
-      <Label layoutX="387.0" layoutY="35.0" prefHeight="92.0" prefWidth="125.0" text="ЧАТ" textFill="LAVENDER">
+      <Label fx:id="chatField" layoutX="387.0" layoutY="35.0" prefHeight="92.0" prefWidth="125.0" text="ЧАТ" textFill="LAVENDER">
          <font>
             <Font size="54.0" />
          </font>

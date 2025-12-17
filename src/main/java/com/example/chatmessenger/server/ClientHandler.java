@@ -11,6 +11,7 @@ public class ClientHandler implements Runnable {
     private BufferedReader reader;
     private PrintWriter writer;
     private String clientInfo;
+    private String username; // Добавляем поле для имени пользователя
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -31,17 +32,34 @@ public class ClientHandler implements Runnable {
 
                 if (message.startsWith("REGISTER:")) {
                     this.clientInfo = message.substring(9);
+                    this.username = extractUsername(clientInfo);
                     System.out.println("Client registered: " + clientInfo);
+                    broadcastStatusUpdate(username, "ONLINE");
+
                 } else if (message.startsWith("MESSAGE:")) {
                     ChatServer.broadcastMessage(message, this);
                 } else if (message.startsWith("NOTIFY:")) {
                     ChatServer.broadcastMessage(message, this);
+                } else if (message.startsWith("STATUS:")) {
+                    handleStatusUpdate(message);
+                } else if (message.startsWith("FRIEND_REQUEST:")) {
+                    // Новый тип: отправка заявки в друзья
+                    handleFriendRequest(message);
+                } else if (message.startsWith("REQUEST_ACCEPTED:")) {
+                    // Новый тип: заявка принята
+                    handleRequestAccepted(message);
+                } else if (message.startsWith("FRIEND_REMOVED:")) {
+                    // Новый тип: удаление друга
+                    handleFriendRemoved(message);
                 }
             }
         } catch (IOException e) {
             System.out.println("Client disconnected: " + clientInfo);
         } finally {
             try {
+                if (username != null) {
+                    broadcastStatusUpdate(username, "OFFLINE");
+                }
                 socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -50,7 +68,84 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private void handleFriendRequest(String message) {
+        // Формат: FRIEND_REQUEST:sender:receiver
+        String[] parts = message.split(":");
+        if (parts.length >= 3) {
+            String sender = parts[1];
+            String receiver = parts[2];
+
+            System.out.println("Friend request from " + sender + " to " + receiver);
+
+            // Отправляем уведомление получателю
+            ChatServer.sendToUser(receiver, "NEW_REQUEST:" + sender);
+        }
+    }
+
+    private void handleRequestAccepted(String message) {
+        // Формат: REQUEST_ACCEPTED:accepter:requester
+        String[] parts = message.split(":");
+        if (parts.length >= 3) {
+            String accepter = parts[1];
+            String requester = parts[2];
+
+            System.out.println("Friend request accepted by " + accepter + " from " + requester);
+
+            // Уведомляем обоих пользователей
+            ChatServer.sendToUser(requester, "REQUEST_ACCEPTED:" + accepter);
+            ChatServer.sendToUser(accepter, "FRIEND_ADDED:" + requester);
+        }
+    }
+
+    private void handleFriendRemoved(String message) {
+        // Формат: FRIEND_REMOVED:remover:removedUser
+        String[] parts = message.split(":");
+        if (parts.length >= 3) {
+            String remover = parts[1];
+            String removedUser = parts[2];
+
+            System.out.println("Friend removed: " + removedUser + " by " + remover);
+
+            // Уведомляем обоих пользователей
+            ChatServer.sendToUser(removedUser, "FRIEND_REMOVED_BY:" + remover);
+            ChatServer.sendToUser(remover, "FRIEND_REMOVED:" + removedUser);
+        }
+    }
+
+    private String extractUsername(String clientInfo) {
+        // Формат: username:status или просто username
+        String[] parts = clientInfo.split(":");
+        return parts[0];
+    }
+
+    private void handleStatusUpdate(String message) {
+        // Формат: STATUS:username:newStatus
+        String[] parts = message.split(":");
+        if (parts.length >= 3) {
+            String username = parts[1];
+            String newStatus = parts[2];
+            broadcastStatusUpdate(username, newStatus);
+        }
+    }
+
+    private void broadcastStatusUpdate(String username, String newStatus) {
+        String statusMessage = "STATUS_UPDATE:" + username + ":" + newStatus;
+
+        // Рассылаем всем КРОМЕ пользователя который изменил статус
+        for (ClientHandler client : ChatServer.getClients()) {
+            if (!username.equals(client.getUsername())) {
+                client.sendMessage(statusMessage);
+            }
+        }
+
+        System.out.println("Broadcasted status update for " + username + " to others");
+    }
+
     public void sendMessage(String message) {
         writer.println(message);
+    }
+
+    public String getUsername() {
+        return username;
     }
 }

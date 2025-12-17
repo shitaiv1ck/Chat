@@ -53,6 +53,7 @@ public class AdminController {
         userLabel.setText(admin.getUsername());
 
         showClientsToRegistration();
+        showApprovedClients();
 
         toAcceptButton.setOnAction(event -> {
             approve();
@@ -90,6 +91,22 @@ public class AdminController {
         } else {
             MenuItem item = new MenuItem("Нет клиентов");
             requestesMenu.getItems().add(item);
+        }
+    }
+
+    private void showApprovedClients() {
+        allClientsMenu.getItems().clear();
+
+        List<String> clients = userRepository.findAllClientsByApproved();
+
+        if (!clients.isEmpty()) {
+            for (String client : clients) {
+                MenuItem item = new MenuItem(client);
+                allClientsMenu.getItems().add(item);
+            }
+        } else {
+            MenuItem item = new MenuItem("Нет клиентов");
+            allClientsMenu.getItems().add(item);
         }
     }
 
