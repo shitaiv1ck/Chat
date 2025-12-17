@@ -26,7 +26,6 @@ public class ChatServer {
         }
     }
 
-    // Старый метод для рассылки сообщений (оставляем для обратной совместимости)
     public static void broadcastMessage(String message, ClientHandler sender) {
         for (ClientHandler client : clients) {
             if (client != sender) {
@@ -44,7 +43,6 @@ public class ChatServer {
         return new ArrayList<>(clients);
     }
 
-    // Метод отправки конкретному пользователю по username
     public static void sendToUser(String username, String message) {
         for (ClientHandler client : clients) {
             if (username.equals(client.getUsername())) {

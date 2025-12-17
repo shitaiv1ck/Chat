@@ -25,7 +25,6 @@ public class ChatClient {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
 
-            // Запускаем поток для прослушивания сообщений
             new Thread(this::listenForMessages).start();
             return true;
         } catch (IOException e) {
@@ -39,17 +38,11 @@ public class ChatClient {
         sendMessage("REGISTER:" + clientInfo);
     }
 
-    // Новый метод: отправка обновления статуса
     public void updateStatus(String newStatus) {
         String message = String.format("STATUS:%s:%s", currentUsername, newStatus);
         sendMessage(message);
     }
 
-    // Остальные методы без изменений
-    public void sendChatMessage(int chatId, String username, String text) {
-        String message = String.format("MESSAGE:%d:%s:%s", chatId, username, text);
-        sendMessage(message);
-    }
 
     public void notifyNewMessage(int chatId) {
         sendMessage("NOTIFY:" + chatId);
@@ -76,12 +69,10 @@ public class ChatClient {
 
     private RequestListener requestListener;
 
-    // Установка листенера
     public void setRequestListener(RequestListener listener) {
         this.requestListener = listener;
     }
 
-    // Новые методы для работы с заявками
     public void sendFriendRequest(String sender, String receiver) {
         String message = String.format("FRIEND_REQUEST:%s:%s", sender, receiver);
         sendMessage(message);
@@ -104,7 +95,6 @@ public class ChatClient {
                 System.out.println("Received from server: " + message);
 
                 if (message.startsWith("STATUS_UPDATE:")) {
-                    // Обрабатываем обновление статуса
                     String[] parts = message.split(":");
                     if (parts.length >= 3) {
                         String username = parts[1];
@@ -122,31 +112,26 @@ public class ChatClient {
                         messageListener.onMessageReceived(message);
                     }
                 } else if (message.startsWith("NEW_REQUEST:")) {
-                    // Новый тип: пришла заявка в друзья
                     String sender = message.substring(12);
                     if (requestListener != null) {
                         requestListener.onNewFriendRequest(sender);
                     }
                 } else if (message.startsWith("REQUEST_ACCEPTED:")) {
-                    // Заявка принята (для отправителя заявки)
                     String accepter = message.substring(17);
                     if (requestListener != null) {
                         requestListener.onRequestAccepted(accepter);
                     }
                 } else if (message.startsWith("FRIEND_ADDED:")) {
-                    // Добавлен новый друг (для принявшего заявку)
                     String newFriend = message.substring(13);
                     if (requestListener != null) {
                         requestListener.onFriendAdded(newFriend);
                     }
                 } else if (message.startsWith("FRIEND_REMOVED:")) {
-                    // Удалили друга
                     String removedFriend = message.substring(15);
                     if (requestListener != null) {
                         requestListener.onFriendRemoved(removedFriend);
                     }
                 } else if (message.startsWith("FRIEND_REMOVED_BY:")) {
-                    // Друг удалил вас
                     String remover = message.substring(18);
                     if (requestListener != null) {
                         requestListener.onFriendRemovedBy(remover);
@@ -159,13 +144,12 @@ public class ChatClient {
     }
 
     public void disconnect() {
-        // При отключении уведомляем сервер о смене статуса
         if (currentUsername != null) {
             updateStatus("OFFLINE");
         }
 
         try {
-            Thread.sleep(100); // Даем время отправить статус
+            Thread.sleep(100);
 
             if (socket != null && !socket.isClosed()) {
                 socket.close();

@@ -74,8 +74,6 @@ public class ChatController implements ChatClient.MessageListener{
 
         ChatRoom chatRoom = ChatSession.getChatRoom();
 
-
-        // Подключаемся к серверу
         chatClient = new ChatClient(this);
         if (chatClient.connect()) {
             chatClient.registerClient(client.getUsername() + "_chat_" + chatRoom.getChatId());
@@ -102,7 +100,7 @@ public class ChatController implements ChatClient.MessageListener{
     @Override
     public void onMessageReceived(String message) {
         if (message.startsWith("NOTIFY:")) {
-            // Обновляем сообщения при получении уведомления
+
             Platform.runLater(() -> {
                 ChatRoom chatRoom = ChatSession.getChatRoom();
                 Client client = ClientSession.getCurrentClient();
@@ -121,7 +119,6 @@ public class ChatController implements ChatClient.MessageListener{
             Message message = new Message(client, text.getText(), chatRoom.getChatId());
             messageService.sendMessage(message);
 
-            // Отправляем уведомление через сокет
             chatClient.notifyNewMessage(chatRoom.getChatId());
 
             text.setText("");

@@ -73,6 +73,7 @@ public class AdminController {
         toAcceptField.setText("");
 
         showClientsToRegistration();
+        showApprovedClients();
     }
 
     private void showClientsToRegistration() {
